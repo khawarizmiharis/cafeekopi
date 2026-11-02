@@ -6,7 +6,7 @@ const router = express.Router();
 
 // git all categories (public)
 router.get('/', (req, res) =>{
-    const categories = db.getkategori();
+    const kategori = db.getkategori();
     res.json({
         succes: true,
         data: kategori
@@ -39,20 +39,38 @@ router.post('/', authenticaToken, (req, res) =>{
     }
 });
 
-router.put('/:id', authenticaToken, (req, res) =>{
+
+router.put('/:id', authenticaToken, (req, res) => {
     try {
-        const update = db.updatekategori(id, name.trim());
-        if(!updated) {
-            return res.status(404).json({ succes: false, message: 'kategori tidak ditemukan'});
+        const { id } = req.params;
+        const { name } = req.body;
+
+        if (!name || !name.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Nama kategori wajib diisi'
+            });
+        }
+
+        const updated = db.updatekategori(id, name.trim());
+
+        if (!updated) {
+            return res.status(404).json({
+                success: false,
+                message: 'Kategori tidak ditemukan'
+            });
         }
 
         res.json({
-            succes: true,
-            message: 'kategori berhasil diperbaharui',
+            success: true,
+            message: 'Kategori berhasil diperbarui',
             data: updated
         });
     } catch (err) {
-        res.status(400).json({succes: false, message: err.message});
+        res.status(400).json({
+            success: false,
+            message: err.message
+        });
     }
 });
 
