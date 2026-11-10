@@ -1,58 +1,99 @@
 import express from 'express';
-import {db} from '../db/db.js';
-import {authenticaToken} from '../middleware/auth.js';
+import { db } from '../db/db.js';
+import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// git all categories (public)
-router.get('/', (req, res) =>{
-    const kategori = db.getkategori();
-    res.json({
-        succes: true,
-        data: kategori
-    });
-});
-
-router.post('/', authenticaToken, (req, res) =>{
-    const{name} = req.body;
-    if (!name || !name.trim()){
-        return res.status(400).json({ succes: false,
-            message: 'nama kategori wajib diisi'
-        });
-    }
-
-    // check duplicate
-    const existing = db.getkategori().find(c => c.name.toLowreCase() === name.trim().toLowreCase());
-    if(existing) {
-        return res.status(400).json({ succes: false, message: 'kategori dengan nama tersebut sudah ada'});
-    }
-
+// GET: Semua kategori (public)
+router.get('/', (req, res) => {
     try {
-        const newCat = db.addkategori(name.trim());
-        res.status(201).json({
-            succes: true,
-            message: 'kategori berhasil ditambahkan',
-            data: newCat
+        const kategori = db.getkategori();
+
+        return res.json({
+            success: true,
+            data: kategori
         });
     } catch (err) {
-        res.status(400).json({succes: false, message: err.message});
+        console.error('Gagal mengambil kategori:', err);
+
+        return res.status(500).json({
+            success: false,
+            message: 'Gagal mengambil data kategori'
+        });
     }
 });
 
-
-router.put('/:id', authenticaToken, (req, res) => {
+// POST: Tambah kategori (admin)
+router.post('/', authenticateToken, (req, res) => {
     try {
-        const { id } = req.params;
         const { name } = req.body;
 
-        if (!name || !name.trim()) {
+        if (typeof name !== 'string' || !name.trim()) {
             return res.status(400).json({
                 success: false,
                 message: 'Nama kategori wajib diisi'
             });
         }
 
-        const updated = db.updatekategori(id, name.trim());
+        const categoryName = name.trim();
+
+        const existing = db.getkategori().find(
+            category => category.name.toLowerCase() === categoryName.toLowerCase()
+        );
+
+        if (existing) {
+            return res.status(409).json({
+                success: false,
+                message: 'Kategori dengan nama tersebut sudah ada'
+            });
+        }
+
+        const newCategory = db.addCategory(categoryName);
+
+        return res.status(201).json({
+            success: true,
+            message: 'Kategori berhasil ditambahkan',
+            data: newCategory
+        });
+    } catch (err) {
+        console.error('Gagal menambahkan kategori:', err);
+
+        return res.status(500).json({
+            success: false,
+            message: 'Gagal menambahkan kategori'
+        });
+    }
+});
+
+// PUT: Perbarui kategori (admin)
+router.put('/:id', authenticateToken, (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name } = req.body;
+
+        if (typeof name !== 'string' || !name.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Nama kategori wajib diisi'
+            });
+        }
+
+        const categoryName = name.trim();
+
+        const existing = db.getkategori().find(
+            category =>
+                category.name.toLowerCase() === categoryName.toLowerCase() &&
+                category.id !== id
+        );
+
+        if (existing) {
+            return res.status(409).json({
+                success: false,
+                message: 'Nama kategori sudah digunakan'
+            });
+        }
+
+        const updated = db.updateCategory(id, categoryName);
 
         if (!updated) {
             return res.status(404).json({
@@ -61,40 +102,64 @@ router.put('/:id', authenticaToken, (req, res) => {
             });
         }
 
-        res.json({
+        return res.json({
             success: true,
             message: 'Kategori berhasil diperbarui',
             data: updated
         });
     } catch (err) {
-        res.status(400).json({
+        console.error('Gagal memperbarui kategori:', err);
+
+        return res.status(500).json({
             success: false,
-            message: err.message
+            message: 'Gagal memperbarui kategori'
         });
     }
 });
 
-router.delete('/:id', authenticaToken, (req, res) =>{
-    const{id} = req.params;
-    const produk = db.getproduk({kategoriId: id});
+// DELETE: Hapus kategori (admin)
+router.delete('/:id', authenticateToken, (req, res) => {
+    try {
+        const { id } = req.params;
 
-    if(produk.length > 0) {
-        return res.status(400).json({
-            succes: false,
-            message: `tidak dapat menghapus kategori karena masih memiliki ${produk.length} produk terkait. hapus agtau pindahkan produk terlebuh dahulu `
+        const category = db.getCategoryById(id);
+
+        if (!category) {
+            return res.status(404).json({
+                success: false,
+                message: 'Kategori tidak ditemukan'
+            });
+        }
+
+        const produk = db.getproduk({ categoryId: id });
+
+        if (produk.length > 0) {
+            return res.status(409).json({
+                success: false,
+                message: `Kategori masih memiliki ${produk.length} produk. Hapus atau pindahkan produk terlebih dahulu.`
+            });
+        }
+
+        const deleted = db.deleteCategory(id);
+
+        if (!deleted) {
+            return res.status(404).json({
+                success: false,
+                message: 'Kategori tidak ditemukan'
+            });
+        }
+
+        return res.json({
+            success: true,
+            message: 'Kategori berhasil dihapus'
+        });
+    } catch (err) {
+        console.error('Gagal menghapus kategori:', err);
+
+        return res.status(500).json({
+            success: false,
+            message: 'Gagal menghapus kategori'
         });
     }
 });
-router.deleted('/:id', authenticaToken, (req, res) =>{
-    const deleted = db.deletkategori(id);
-    if(!deleted){
-        return res.status(404).json({succes: false, message: 'kategori tidak ditemukan'});
-    }
-
-    res.json({
-        succes: true,
-        message: 'kategori berhasil dihapus'
-    });
-});
-
 export default router;

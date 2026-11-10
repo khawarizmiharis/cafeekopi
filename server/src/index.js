@@ -1,34 +1,33 @@
 import express from 'express';
-import cors from 'cors' ;
+import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
-import authRoutes from '.routes/auth.js';
-import categoryRoutes from '.routes/kategori.js';
-import produkRoutes from './routes/product.js';
+import authRoutes from './routes/auth.js';
+import categoryRoutes from './routes/kategori.js';
+import produkRoutes from './routes/produk.js';
 import storeRoutes from './routes/store.js';
-import {time} from 'console';
 
-dotenv.config()
+dotenv.config();
 
-const__filename = fileURLToPath(import.meta.url);
-const__dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// midleware
+// Middleware
 app.use(cors({
-    origin:'*',
-    methods:['GET', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowwedHeaders : ['Content-Type', 'Authorization']
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json());
-app.use(express.urlencoded({extended: true}));
+app.use(express.urlencoded({ extended: true }));
 
-// serve static uploades files
+// Static uploaded files
 const uploadsPath = path.join(__dirname, '../uploads');
 app.use('/uploads', express.static(uploadsPath));
 
@@ -38,19 +37,16 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/produk', produkRoutes);
 app.use('/api/store', storeRoutes);
 
-// Heak Check Endpoint
-app.get('api/healt', (rq,res) => {
+// Health Check
+app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
-        app: 'katalog Wa API Server',
+        app: 'Katalog CaffeKopi API Server',
         timestamp: new Date().toISOString()
     });
 });
 
-// STAR SERVER
+// Start Server
 app.listen(PORT, () => {
-    console.log(`katalog Wa API Server running on http://localhost:${PORT}`);
+    console.log(`Katalog CaffeKopi API Server running on http://localhost:${PORT}`);
 });
-
-
-

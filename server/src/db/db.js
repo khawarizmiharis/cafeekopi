@@ -34,7 +34,7 @@ class SqliteDatabase {
       CREATE TABLE IF NOT EXISTS produk (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
-        category_id TEXT NOT NULL REFERENCES kategori(id) ON DELETE RESTRICT,
+        kategori_id TEXT NOT NULL REFERENCES kategori(id) ON DELETE RESTRICT,
         price INTEGER NOT NULL,
         stockStatus TEXT NOT NULL DEFAULT 'Tersedia',
         description TEXT,
@@ -65,7 +65,7 @@ class SqliteDatabase {
 
     // Indexes
     this.db.exec(`
-      CREATE INDEX IF NOT EXISTS idx_produk_cat ON produk(category_id);
+      CREATE INDEX IF NOT EXISTS idx_produk_cat ON produk(kategori_id);
       CREATE INDEX IF NOT EXISTS idx_produk_stock ON produk(stockStatus);
     `);
   }
@@ -75,10 +75,10 @@ class SqliteDatabase {
     const existingSettings = this.db.prepare('SELECT COUNT(*) AS count FROM settings').get();
     if (existingSettings.count === 0) {
       const insertSetting = this.db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)');
-      insertSetting.run('storeName', 'Toko Berkah Nusantara');
-      insertSetting.run('tagline', 'Kuliner Lezat & Segar Siap Antar Setiap Hari');
+      insertSetting.run('storeName', 'Cofee Sprin');
+      insertSetting.run('tagline', 'Santai dengan Coffe yang nikmat dietamani dengan Makanan Yang Lezat');
       insertSetting.run('phone', '6281234567890');
-      insertSetting.run('address', 'Jl. Melati No. 12, Kebayoran Baru, Jakarta Selatan');
+      insertSetting.run('address', 'Sukabumi, Cibolang Kaler');
       insertSetting.run('currency', 'Rp');
     }
 
@@ -104,7 +104,7 @@ class SqliteDatabase {
     const existingProduk = this.db.prepare('SELECT COUNT(*) AS count FROM produk').get();
     if (existingProduk.count === 0) {
       const insertProduct = this.db.prepare(`
-        INSERT INTO produk (id, name, category_id, price, stockStatus, description, image)
+        INSERT INTO produk (id, name, kategori_id, price, stockStatus, description, image)
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `);
 
@@ -271,7 +271,7 @@ class SqliteDatabase {
       SELECT 
         p.id, 
         p.name, 
-        p.category_id AS categoryId, 
+        p.kategori_id AS categoryId, 
         c.name AS categoryName, 
         p.price, 
         p.stockStatus AS stockStatus, 
@@ -286,7 +286,7 @@ class SqliteDatabase {
     const params = [];
 
     if (filters.categoryId) {
-      sql += ' AND p.category_id = ?';
+      sql += ' AND p.kategori_id = ?';
       params.push(filters.categoryId);
     }
 
@@ -313,7 +313,7 @@ class SqliteDatabase {
       SELECT 
         p.id, 
         p.name, 
-        p.category_id AS categoryId, 
+        p.kategori_id AS categoryId, 
         c.name AS categoryName, 
         p.price, 
         p.stockStatus AS stockStatus, 
@@ -339,7 +339,7 @@ class SqliteDatabase {
     this.db
       .prepare(
         `
-      INSERT INTO produk (id, name, category_id, price, stockStatus, description, image)
+      INSERT INTO produk (id, name, kategori_id, price, stockStatus, description, image)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `,
       )
@@ -371,7 +371,7 @@ class SqliteDatabase {
       .prepare(
         `
       UPDATE produk 
-      SET name = ?, category_id = ?, price = ?, stockStatus = ?, description = ?, image = ?, updated_at = CURRENT_TIMESTAMP
+      SET name = ?, kategori_id = ?, price = ?, stockStatus = ?, description = ?, image = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `,
       )

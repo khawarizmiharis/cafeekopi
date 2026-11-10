@@ -1,1 +1,12 @@
+# Dependencies
 node_modules/
+server/node_modules/
+client/node_modules/
+
+# SQLite Databases & Backups
+server/src/db/*.sqlite
+server/src/db/*.sqlite-journal
+
+# Uploads
+server/uploads/
+!server/uploads/.gitkeep
